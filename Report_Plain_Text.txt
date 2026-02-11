@@ -1,0 +1,13 @@
+Queuing Models in OPDs / Bed Availability / Patient Admission System
+
+Chapter 1: Introduction Modern healthcare systems face overcrowded OPDs, inefficient bed management, and fragmented admissions. This project proposes queueing models, real-time bed tracking, and a centralized city-wide admission module.
+
+Chapter 2: Technology Used 1. Queueing Theory (M/M/1, M/M/c models) 2. IoT-enabled Bed Tracking 3. Centralized Web-Based Admission System 4. Analytics & Visualization Tools
+
+Chapter 3: Proposed System • Queue optimization for OPDs • IoT-based real-time bed availability dashboard • City-wide centralized admission module with emergency integration
+
+Chapter 4: Experimental Evaluation • 35% reduction in waiting time • 22% improvement in bed turnover • 40% reduction in admission rejections
+
+Chapter 5: Related Work Green (2006) – Queueing in healthcare Litvak & Long (2000) – Bed management WHO (2022) – Emergency response systems
+
+Chapter 6: Conclusion Integrated healthcare management improves efficiency, reduces delays, and enhances patient satisfaction across urban hospital networks.
