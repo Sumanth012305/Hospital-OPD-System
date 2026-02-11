@@ -1,37 +1,70 @@
-# Hospital OPD System
-
 class Patient:
-    def __init__(self, name, age, gender, symptoms):
+    def __init__(self, name, priority):
         self.name = name
-        self.age = age
-        self.gender = gender
-        self.symptoms = symptoms
+        self.priority = priority
+    
+    def __lt__(self, other):
+        return self.priority < other.priority
 
-    def display_info(self):
-        return f'Patient: {self.name}, Age: {self.age}, Gender: {self.gender}, Symptoms: {self.symptoms}'
+class Bed:
+    def __init__(self, bed_number):
+        self.bed_number = bed_number
+        self.is_occupied = False
 
-class Doctor:
-    def __init__(self, name, specialization):
-        self.name = name
-        self.specialization = specialization
+class HospitalSystem:
+    def __init__(self):
+        self.priority_queue = []
+        self.beds = {1: Bed(1), 2: Bed(2), 3: Bed(3)}  # Example bed numbers
+        
+    def admit_patient(self, patient):
+        heapq.heappush(self.priority_queue, patient)
 
-    def display_info(self):
-        return f'Doctor: {self.name}, Specialization: {self.specialization}'
+    def discharge_patient(self):
+        if self.priority_queue:
+            patient = heapq.heappop(self.priority_queue)
+            print(f'Discharging patient: {patient.name}')
+        else:
+            print('No patients to discharge')
 
-class Appointment:
-    def __init__(self, patient, doctor, date_time):
-        self.patient = patient
-        self.doctor = doctor
-        self.date_time = date_time
+    def assign_bed(self, patient_name):
+        for bed in self.beds.values():
+            if not bed.is_occupied:
+                bed.is_occupied = True
+                print(f'Assigned {patient_name} to bed {bed.bed_number}')
+                return
+        print('No beds available')
 
-    def display_appointment(self):
-        return f'Appointment for {self.patient.name} with Dr. {self.doctor.name} on {self.date_time}'
+    def show_patients(self):
+        print('Current patients in the system:')
+        for patient in self.priority_queue:
+            print(f'Patient: {patient.name}, Priority: {patient.priority}')
 
-# Example usage
+import heapq
+
 if __name__ == '__main__':
-    patient1 = Patient('John Doe', 30, 'Male', 'Headache')
-    doctor1 = Doctor('Dr. Smith', 'Neurologist')
-    appointment1 = Appointment(patient1, doctor1, '2023-02-12 10:00:00')
-    print(patient1.display_info())
-    print(doctor1.display_info())
-    print(appointment1.display_appointment())
+    hospital_system = HospitalSystem()
+    while True:
+        print('\nHospital OPD Management System')
+        print('1. Admit Patient')
+        print('2. Discharge Patient')
+        print('3. Show Patients')
+        print('4. Assign Bed')
+        print('5. Exit')
+        choice = input('Enter your choice: ')
+        
+        if choice == '1':
+            name = input('Enter patient name: ')
+            priority = int(input('Enter patient priority (1-5): '))
+            patient = Patient(name, priority)
+            hospital_system.admit_patient(patient)
+        elif choice == '2':
+            hospital_system.discharge_patient()
+        elif choice == '3':
+            hospital_system.show_patients()
+        elif choice == '4':
+            name = input('Enter patient name for bed assignment: ')
+            hospital_system.assign_bed(name)
+        elif choice == '5':
+            break
+        else:
+            print('Invalid choice! Please try again.')
