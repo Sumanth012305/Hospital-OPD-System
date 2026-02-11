@@ -1,0 +1,257 @@
+import heapq
+import uuid
+from datetime import datetime
+
+
+# -----------------------------
+# Patient Class
+# -----------------------------
+
+class Patient:
+    def __init__(self, name, condition):
+        self.id = str(uuid.uuid4())[:8]
+        self.name = name.strip()
+        self.condition = condition.lower()
+        self.arrival_time = datetime.now()
+
+    def __lt__(self, other):
+        return False  # Required for heapq when priorities match
+
+
+# -----------------------------
+# Bed Class
+# -----------------------------
+
+class Bed:
+    def __init__(self, bed_id, bed_type):
+        self.bed_id = bed_id
+        self.bed_type = bed_type
+        self.occupied_by = None
+
+    def is_available(self):
+        return self.occupied_by is None
+
+
+# -----------------------------
+# Hospital System
+# -----------------------------
+
+class HospitalSystem:
+
+    priority_map = {
+        "icu": 1,
+        "maternity": 2,
+        "pediatrics": 3,
+        "general": 4
+    }
+
+    def __init__(self):
+        self.opd_queue = []  # priority queue
+        self.waiting_list = []
+        self.beds = self._initialize_beds()
+        self.admitted_patients = {}
+
+        # Statistics
+        self.total_admitted = 0
+        self.total_discharged = 0
+
+    def _initialize_beds(self):
+        beds = []
+
+        for i in range(5):
+            beds.append(Bed(f"G{i+1}", "general"))
+
+        for i in range(3):
+            beds.append(Bed(f"ICU{i+1}", "icu"))
+
+        for i in range(2):
+            beds.append(Bed(f"M{i+1}", "maternity"))
+
+        for i in range(2):
+            beds.append(Bed(f"P{i+1}", "pediatrics"))
+
+        return beds
+
+    # -----------------------------
+    # Add Patient to Queue
+    # -----------------------------
+
+    def add_patient(self, name, condition):
+        if not name.strip():
+            print("❌ Name cannot be empty.")
+            return
+
+        if condition not in self.priority_map:
+            print("❌ Invalid condition type.")
+            return
+
+        patient = Patient(name, condition)
+        priority = self.priority_map[condition]
+        heapq.heappush(self.opd_queue, (priority, patient))
+
+        print(f"✅ Patient '{name}' added to OPD queue.")
+
+    # -----------------------------
+    # Smart Bed Allocation Logic
+    # -----------------------------
+
+    def find_available_bed(self, patient):
+
+        # ICU patients → only ICU
+        if patient.condition == "icu":
+            allowed = ["icu"]
+
+        # General patients → general OR ICU
+        elif patient.condition == "general":
+            allowed = ["general", "icu"]
+
+        else:
+            allowed = [patient.condition]
+
+        for bed in self.beds:
+            if bed.is_available() and bed.bed_type in allowed:
+                return bed
+
+        return None
+
+    # -----------------------------
+    # Process Next Patient
+    # -----------------------------
+
+    def process_next_patient(self):
+        if not self.opd_queue:
+            print("No patients in queue.")
+            return
+
+        priority, patient = self.opd_queue[0]  # Peek only
+        bed = self.find_available_bed(patient)
+
+        if bed:
+            heapq.heappop(self.opd_queue)  # Remove only if admitted
+            bed.occupied_by = patient
+            self.admitted_patients[patient.id] = bed
+            self.total_admitted += 1
+
+            wait_time = (datetime.now() - patient.arrival_time).seconds
+
+            print(f"\n🏥 Admitted: {patient.name}")
+            print(f"Bed: {bed.bed_id} ({bed.bed_type})")
+            print(f"Wait Time: {wait_time} seconds")
+
+        else:
+            print("⚠ No suitable beds available. Patient moved to waiting list.")
+            heapq.heappop(self.opd_queue)
+            self.waiting_list.append(patient)
+
+    # -----------------------------
+    # Discharge
+    # -----------------------------
+
+    def discharge_patient(self, patient_id):
+        if patient_id in self.admitted_patients:
+            bed = self.admitted_patients.pop(patient_id)
+            print(f"✅ Discharged: {bed.occupied_by.name}")
+            bed.occupied_by = None
+            self.total_discharged += 1
+
+            self.check_waiting_list()
+
+        else:
+            print("❌ Patient ID not found.")
+
+    # -----------------------------
+    # Auto Admit from Waiting List
+    # -----------------------------
+
+    def check_waiting_list(self):
+        for patient in self.waiting_list[:]:
+            bed = self.find_available_bed(patient)
+            if bed:
+                bed.occupied_by = patient
+                self.admitted_patients[patient.id] = bed
+                self.waiting_list.remove(patient)
+                self.total_admitted += 1
+                print(f"🔄 Waiting patient admitted: {patient.name}")
+
+    # -----------------------------
+    # Status Display
+    # -----------------------------
+
+    def show_bed_status(self):
+        print("\n=== Bed Status ===")
+        for bed in self.beds:
+            status = "Available" if bed.is_available() else f"Occupied by {bed.occupied_by.name}"
+            print(f"{bed.bed_id} ({bed.bed_type}) → {status}")
+
+    def show_statistics(self):
+        total_beds = len(self.beds)
+        occupied = sum(1 for bed in self.beds if not bed.is_available())
+        occupancy_rate = (occupied / total_beds) * 100
+
+        print("\n=== Hospital Statistics ===")
+        print(f"Total Admitted: {self.total_admitted}")
+        print(f"Total Discharged: {self.total_discharged}")
+        print(f"Current Occupancy Rate: {occupancy_rate:.2f}%")
+        print(f"Waiting List Count: {len(self.waiting_list)}")
+
+    def list_admitted_patients(self):
+        print("\n=== Admitted Patients ===")
+        if not self.admitted_patients:
+            print("No patients admitted.")
+            return
+
+        for pid, bed in self.admitted_patients.items():
+            print(f"{bed.occupied_by.name} | ID: {pid} | Bed: {bed.bed_id}")
+
+
+# -----------------------------
+# Main Menu
+# -----------------------------
+
+def main():
+    system = HospitalSystem()
+
+    while True:
+        print("\n==== Hospital Management System ====")
+        print("1. Add Patient")
+        print("2. Process Next Patient")
+        print("3. Discharge Patient")
+        print("4. Show Bed Status")
+        print("5. Show Statistics")
+        print("6. Show Admitted Patients")
+        print("0. Exit")
+
+        choice = input("Select option: ")
+
+        if choice == "1":
+            name = input("Enter patient name: ")
+            condition = input("Condition (icu/maternity/pediatrics/general): ").lower()
+            system.add_patient(name, condition)
+
+        elif choice == "2":
+            system.process_next_patient()
+
+        elif choice == "3":
+            system.list_admitted_patients()
+            pid = input("Enter Patient ID: ")
+            system.discharge_patient(pid)
+
+        elif choice == "4":
+            system.show_bed_status()
+
+        elif choice == "5":
+            system.show_statistics()
+
+        elif choice == "6":
+            system.list_admitted_patients()
+
+        elif choice == "0":
+            print("Exiting system.")
+            break
+
+        else:
+            print("Invalid option.")
+
+
+if __name__ == "__main__":
+    main()
