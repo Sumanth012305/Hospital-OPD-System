@@ -1,0 +1,11 @@
+Queuing Models in OPDs Bed Availability & Admission System By: Sumanth Reddy Thodem
+
+Introduction • Long waiting times in OPDs • Bed shortages • Lack of coordination between hospitals
+
+Objective • Improve OPD efficiency • Real-time bed tracking • Centralized admission management
+
+Methodology • Data collection • Queue model simulation • IoT bed tracking • Central dashboard
+
+Results • 35% reduced waiting time • 22% improved bed turnover • 40% fewer admission rejections
+
+Conclusion Integrated systems improve efficiency, optimize resources, and enhance emergency response.
